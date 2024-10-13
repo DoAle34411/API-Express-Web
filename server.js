@@ -2,6 +2,7 @@
 const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');  // Ensure correct path
 require('dotenv').config();  // Load environment variables from .env
 
@@ -14,6 +15,7 @@ app.use(session({
     resave: false, 
     saveUninitialized: false 
 }));
+app.use(cors());
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, { 
