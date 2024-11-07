@@ -3,7 +3,8 @@ const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const userRoutes = require('./routes/userRoutes');  // Ensure correct path
+const userRoutes = require('./routes/userRoutes');
+const bookRoutes = require('./routes/bookRoutes');  // Ensure correct path
 require('dotenv').config();  // Load environment variables from .env
 
 const app = express();
@@ -26,7 +27,8 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch(err => console.error(err));
 
 // Routes
-app.use('/users', userRoutes);  // Use '/users' for user-related routes
+app.use('/users', userRoutes);  // User routes
+app.use('/books', bookRoutes);   // Book routes
 
 // Start the server
 app.listen(5000, () => console.log('Server running on port 5000'));
