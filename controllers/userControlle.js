@@ -96,6 +96,36 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+exports.loginAdmin = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Find the user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the password matches
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Check if the user has admin privileges
+    if (!user.isAdmin) {
+      return res.status(403).json({ message: "Access denied. Admins only." });
+    }
+
+    // If all checks pass, set session or token and respond
+    req.session.userId = user._id;  // Assuming session-based authentication
+    res.json({ message: "Admin login successful", userId: user._id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 // Update Password
 exports.updatePassword = async (req, res) => {
   const { oldPassword, newPassword } = req.body;
