@@ -13,7 +13,8 @@ const bookSchema = new Schema({
   amountAvailable: { type: Number, required: true },
   amountTotal: { type: Number, required: true },
   amountRented: { type: Number, default: 0 },
-  synopsis: { type: String }
+  synopsis: { type: String },
+  imageUrl:{type:String, required:true, default:'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'}
 }, { timestamps: true });
 
 const Book = mongoose.model('Book', bookSchema);
