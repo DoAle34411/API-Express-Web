@@ -151,3 +151,16 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.clearMulta = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.user_id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.multa = 0;
+    await user.save();
+    res.json({ message: "Multa cleared successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

@@ -11,5 +11,7 @@ router.post('/login', userController.loginUser);
 router.post('/update-password/:id', userController.updatePassword);
 router.post('/admin/login', userController.loginAdmin);
 router.get('/admin/allUsers', userController.getAllUsers);
+router.post('/admin/clear-multa/:user_id', userController.clearMulta);
+
 
 module.exports = router;

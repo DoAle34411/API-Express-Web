@@ -2,7 +2,7 @@ const Book = require('../models/Book');
 
 // Create Book
 exports.createBook = async (req, res) => {
-  const { name, editorial, edition, status, author, genre, pages, amountAvailable, amountTotal, synopsis } = req.body;
+  const { name, editorial, edition, status, author, genre, pages, amountAvailable, amountTotal, synopsis, bookImage } = req.body;
   
   try {
     const newBook = new Book({
@@ -16,7 +16,8 @@ exports.createBook = async (req, res) => {
       amountAvailable,
       amountTotal,
       amountRented: 0,
-      synopsis
+      synopsis,
+      bookImage: bookImage || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'
     });
     
     await newBook.save();
