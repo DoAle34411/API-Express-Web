@@ -166,3 +166,42 @@ exports.getMostCommonGenresByUserId = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.getTopRentedBooksAllTime = async (req, res) => {
+  try {
+    const books = await Book.find().sort({ amountRented: -1 }).limit(6);
+    res.json(books);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// controllers/rentsController.js
+exports.getTopRentedBooksLastMonth = async (req, res) => {
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  try {
+    const recentRents = await Rent.find({ start_date: { $gte: oneMonthAgo } }).populate('books.book_id');
+    const bookCounts = {};
+
+    recentRents.forEach(rent => {
+      rent.books.forEach(book => {
+        const bookId = book.book_id._id.toString();
+        if (!bookCounts[bookId]) {
+          bookCounts[bookId] = { book: book.book_id, count: 0 };
+        }
+        bookCounts[bookId].count += book.amountRented;
+      });
+    });
+
+    const topBooks = Object.values(bookCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3)
+      .map(entry => entry.book);
+
+    res.json(topBooks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
