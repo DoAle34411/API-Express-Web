@@ -128,9 +128,11 @@ exports.loginAdmin = async (req, res) => {
 
 // Update Password
 exports.updatePassword = async (req, res) => {
-  const { oldPassword, newPassword } = req.body;
+  const { email, oldPassword, newPassword } = req.body; // Expect email in the request body
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne({ email }); // Find user by email
+    if (!user) return res.status(404).json({ message: "User not found" });
+
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) return res.status(400).json({ message: "Old password does not match" });
 
