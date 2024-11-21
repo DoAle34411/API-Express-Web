@@ -11,7 +11,7 @@ router.get('/rents/book/:bookId', rentsController.getRentsByBookId); // Get all 
 router.put('/rents/:rentId', rentsController.updateRent); // Update a rent
 router.get('/rents/genres/most-rented', rentsController.getMostRentedGenresAllTime); // Most rented genres all time
 router.get('/rents/genres/most-rented/time', rentsController.getMostRentedGenresByPeriod); // Most rented genres in a time period
-router.get('/rents/genres/user/:userId', rentsController.getUserMostRentedGenres); // Most common genres rented by user
+router.get('/rents/genres/user/:userId', rentsController.getMostCommonGenresByUserId); // Most common genres rented by user
 // routes/rent.js
 router.get('/rents/top-books', rentsController.getTopRentedBooksAllTime); // Top rented books of all time
 router.get('/rents/top-books/month', rentsController.getTopRentedBooksLastMonth); // Top rented books of the last month
