@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const bookRoutes = require('./routes/bookRoutes');  // Ensure correct path
-const rentRoutes = require('./routes/rentRoutes')
+const rentRoutes = require('./routes/rentRoutes');
 require('dotenv').config();  // Load environment variables from .env
 
 const app = express();

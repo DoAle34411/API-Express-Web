@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rentsController = require('../controllers/rentsController');
-const rentDetailsController = require('../controllers/rentDetailsController');
+const rentDetailsController = require('../controllers/rentDetailController');
 
 // Routes for Rent
 router.post('/rents', rentsController.createRent); // Create a new rent
