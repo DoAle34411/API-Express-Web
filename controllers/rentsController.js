@@ -82,7 +82,7 @@ exports.getAllRents = async (req, res) => {
 // Get all Rents by User ID
 exports.getRentsByUserId = async (req, res) => {
   try {
-    const rents = await Rent.find({ user_id: req.params.user_id });
+    const rents = await Rent.find({ user_id: req.params.userId });
     res.json(rents);
   } catch (err) {
     res.status(500).json({ error: err.message });

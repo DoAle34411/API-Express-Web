@@ -11,7 +11,8 @@ const userSchema = new Schema({
   phoneNumber: { type: String, required: true },
   password: { type: String, required: true },
   gender: { type: String, required: true },
-  isAdmin:{ type: Boolean, required: true, default: false}
+  isAdmin:{ type: Boolean, required: true, default: false},
+  multa: {type: Number, default: 0 }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
