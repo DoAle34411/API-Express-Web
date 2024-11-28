@@ -10,7 +10,7 @@ exports.createRent = async (req, res) => {
     const user = await User.findById(user_id);
 
     // Check for "multa" condition
-    if (user.multa && user.multa > 0) {
+    if (user.multa || user.multa > 0) {
       return res.status(400).json({ message: "User has pending multa. Cannot create rent." });
     }
 
