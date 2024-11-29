@@ -1,7 +1,6 @@
 const Rent = require('../models/Rent');
 const Book = require('../models/Book');
 const User = require('../models/Users');
-const RentDetail = require('../models/rentDetail');
 
 exports.createRent = async (req, res) => {
   const { user_id, books } = req.body;
@@ -10,129 +9,149 @@ exports.createRent = async (req, res) => {
     const user = await User.findById(user_id);
 
     // Check for "multa" condition
-    if (user.multa || user.multa > 0) {
+    if (user.multa > 0) {
       return res.status(400).json({ message: "User has pending multa. Cannot create rent." });
     }
-
-    // Check book availability and create rent details
-    const rentDetails = [];
-    const newRent = new Rent({ user_id });
-    await newRent.save();
-
+    const newBooks = [];
     for (const { book_id, amountRented } of books) {
       const book = await Book.findById(book_id);
 
       if (!book || book.amountAvailable < amountRented) {
         return res.status(400).json({ message: `Not enough copies available for book ${book_id}.` });
       }
-
       book.amountAvailable -= amountRented;
       book.amountRented += amountRented;
       await book.save();
-
-      const newRentDetail = new RentDetail({
-        Id_rent: newRent._id,
-        Id_Book: book_id,
-        Amount_rented: amountRented
-      });
-      await newRentDetail.save();
-      rentDetails.push(newRentDetail);
+      let id_Book = book_id
+      let amount_rented = amountRented
+      newBooks.push({ id_Book, amount_rented });
     }
+    const newRent = new Rent({ user_id, books: newBooks });
+    await newRent.save();
 
-    res.status(201).json({ rent: newRent, rentDetails });
+    res.status(201).json({ rent: newRent });
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
 };
 
-// Update Rent - returns and checks for late returns
 exports.updateRent = async (req, res) => {
   try {
-    const rent = await Rent.findById(req.params.rent_id);
+    const rent = await Rent.findOne({rent_id: req.params.rent_id});
     if (!rent) return res.status(404).json({ message: "Rent not found" });
-
     // Update return_date and check for lateness
     rent.return_date = new Date();
     if (rent.return_date > rent.max_end_date) {
       rent.late = true;
 
-      // Update user's "multa"
       const user = await User.findById(rent.user_id);
       user.multa = (user.multa || 0) + 20;
       await user.save();
     }
 
-    await rent.save();
+    // Restore availability for each book in the rent
+    for (const { id_Book, amount_rented  } of rent.books) {
+      console.log(id_Book)
+      await Book.findByIdAndUpdate(
+        id_Book,
+        {
+          $inc: {
+            amountAvailable: amount_rented , // Increment availability
+            amountRented: -amount_rented ,  // Decrement rented count
+          },
+        },
+        { new: true } // Return the updated document (optional for debugging/logging)
+      );
+    }
+
+    //await rent.save();
     res.json(rent);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Get all Rents
 exports.getAllRents = async (req, res) => {
   try {
-    const rents = await Rent.find();
+    const rents = await Rent.find().populate('books.id_Book');
     res.json(rents);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Get all Rents by User ID
 exports.getRentsByUserId = async (req, res) => {
   try {
-    const rents = await Rent.find({ user_id: req.params.userId });
+    const rents = await Rent.find({user_id: req.params.user_id} ).populate('books.id_Book');
     res.json(rents);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Get all Rents by Book ID
 exports.getRentsByBookId = async (req, res) => {
   try {
-    const rents = await Rent.find({ "details.Id_Book": req.params.book_id });
-    res.json(rents);
+    const rents = await Rent.find({ "books.id_Book": req.params.book_id });
+
+    if (!rents.length) {
+      return res.status(404).json({ message: "No rents found for the given book ID." });
+    }
+
+    // Calculate the total amount rented for the specific book
+    let totalAmountRented = 0;
+    rents.forEach(rent => {
+      const book = rent.books.find(book => book.id_Book === req.params.book_id);
+      if (book) {
+        totalAmountRented += book.amount_rented;
+      }
+    });
+
+    res.json({ book_id: req.params.book_id, totalAmountRented });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Get Most Rented Genres of All Time
 exports.getMostRentedGenresAllTime = async (req, res) => {
   try {
-    const allBooks = await Book.find();
+    const rents = await Rent.find(); // Get all rents
     const genreCounts = {};
 
-    for (const book of allBooks) {
-      if (!genreCounts[book.genre]) {
-        genreCounts[book.genre] = 0;
+    for (const rent of rents) {
+      for (const { id_Book, amount_rented } of rent.books) {
+        const book = await Book.findById(id_Book); // Find the book to get its genre
+        if (book) {
+          if (!genreCounts[book.genre]) {
+            genreCounts[book.genre] = 0;
+          }
+          genreCounts[book.genre] += amount_rented; // Add the amount rented
+        }
       }
-      genreCounts[book.genre] += book.amountRented;
     }
 
+    // Sort genres by total rentals in descending order
     const sortedGenres = Object.entries(genreCounts).sort((a, b) => b[1] - a[1]);
+
     res.json(sortedGenres);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Get Most Rented Genres by Time Period
 exports.getMostRentedGenresByPeriod = async (req, res) => {
   const { startDate, endDate } = req.body;
 
   try {
-    const rents = await Rent.find({ start_date: { $gte: new Date(startDate), $lte: new Date(endDate) } }).populate('books.book_id');
+    const rents = await Rent.find({ start_date: { $gte: new Date(startDate), $lte: new Date(endDate) } }).populate('books.id_Book');
 
     const genreCounts = {};
     rents.forEach(rent => {
       rent.books.forEach(book => {
-        if (!genreCounts[book.genre]) {
-          genreCounts[book.genre] = 0;
+        const bookDetails = book.id_Book; // Populated book details
+        if (!genreCounts[bookDetails.genre]) {
+          genreCounts[bookDetails.genre] = 0;
         }
-        genreCounts[book.genre] += book.amountRented;
+        genreCounts[bookDetails.genre] += book.amount_rented;
       });
     });
 
@@ -143,20 +162,20 @@ exports.getMostRentedGenresByPeriod = async (req, res) => {
   }
 };
 
-// Get Most Common Rented Genres by User ID
 exports.getMostCommonGenresByUserId = async (req, res) => {
   const userId = req.params.user_id;
 
   try {
-    const rents = await Rent.find({ user_id: userId }).populate('books.book_id');
+    const rents = await Rent.find({ user_id: userId }).populate('books.id_Book');
 
     const genreCounts = {};
     rents.forEach(rent => {
       rent.books.forEach(book => {
-        if (!genreCounts[book.genre]) {
-          genreCounts[book.genre] = 0;
+        const bookDetails = book.id_Book; // Populated book details
+        if (!genreCounts[bookDetails.genre]) {
+          genreCounts[bookDetails.genre] = 0;
         }
-        genreCounts[book.genre] += book.amountRented;
+        genreCounts[bookDetails.genre] += book.amount_rented;
       });
     });
 
@@ -176,22 +195,21 @@ exports.getTopRentedBooksAllTime = async (req, res) => {
   }
 };
 
-// controllers/rentsController.js
 exports.getTopRentedBooksLastMonth = async (req, res) => {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
   try {
-    const recentRents = await Rent.find({ start_date: { $gte: oneMonthAgo } }).populate('books.book_id');
+    const recentRents = await Rent.find({ start_date: { $gte: oneMonthAgo } }).populate('books.id_Book');
     const bookCounts = {};
 
     recentRents.forEach(rent => {
       rent.books.forEach(book => {
-        const bookId = book.book_id._id.toString();
+        const bookId = book.id_Book.toString();
         if (!bookCounts[bookId]) {
-          bookCounts[bookId] = { book: book.book_id, count: 0 };
+          bookCounts[bookId] = { book: book.id_Book, count: 0 };
         }
-        bookCounts[bookId].count += book.amountRented;
+        bookCounts[bookId].count += book.amount_rented;
       });
     });
 
