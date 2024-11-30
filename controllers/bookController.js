@@ -17,7 +17,7 @@ exports.createBook = async (req, res) => {
       amountTotal,
       amountRented: 0,
       synopsis,
-      bookImage: bookImage || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'
+      imageUrl: bookImage || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'
     });
     
     await newBook.save();
