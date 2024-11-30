@@ -71,8 +71,7 @@ exports.getAllBooks = async (req, res) => {
   
   // controllers/booksController.js
 exports.getBooksByGenres = async (req, res) => {
-  const { genres } = req.query;
-
+  const genres = req.query.genres.split(',');
   try {
     const books = await Book.find({ genre: { $in: genres } });
     res.json(books);

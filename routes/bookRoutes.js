@@ -7,6 +7,6 @@ router.get('/', bookController.getAllBooks);
 router.get('/:id', bookController.findBookById);
 router.put('/update/:id', bookController.updateBook);
 router.delete('/delete/:id', bookController.deleteBook);
-router.get('/by-genres', bookController.getBooksByGenres); // Fetch books by genre list
+router.get('/book/by-genres', bookController.getBooksByGenres); // Fetch books by genre list
 
 module.exports = router;
