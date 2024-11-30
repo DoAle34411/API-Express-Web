@@ -28,7 +28,7 @@ exports.createRent = async (req, res) => {
       const book = await Book.findById(book_id);
 
       if (!book || book.amountAvailable < amountRented) {
-        return res.status(400).json({ message: Not enough copies available for book ${book_id}. });
+        return res.status(400).json({ message: `Not enough copies available for book ${book_id}.` });
       }
       book.amountAvailable -= amountRented;
       book.amountRented += amountRented;
