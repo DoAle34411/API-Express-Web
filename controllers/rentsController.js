@@ -48,7 +48,6 @@ exports.updateRent = async (req, res) => {
       user.multa = (user.multa || 0) + 20;
       await user.save();
     }
-
     // Restore availability for each book in the rent
     for (const { id_Book, amount_rented  } of rent.books) {
       console.log(id_Book)
@@ -64,7 +63,7 @@ exports.updateRent = async (req, res) => {
       );
     }
 
-    //await rent.save();
+    await rent.save();
     res.json(rent);
   } catch (err) {
     res.status(500).json({ error: err.message });
