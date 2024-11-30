@@ -169,10 +169,11 @@ exports.clearMulta = async (req, res) => {
 
 exports.findUserById = async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.params.userId });
+    const user = await User.findOne({ _id: req.params.id_user }); // Use 'id_user' as the parameter name
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
