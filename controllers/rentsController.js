@@ -13,7 +13,7 @@ const checkAuthorization = (req, res, next) => {
   next();
 };
 
-exports.createRent = [checkAuthorization, async (req, res) => {
+exports.createRent = async (req, res) => {
   const { user_id, books } = req.body;
 
   try {
@@ -23,22 +23,20 @@ exports.createRent = [checkAuthorization, async (req, res) => {
     if (user.multa > 0) {
       return res.status(400).json({ message: "User has pending multa. Cannot create rent." });
     }
-
     const newBooks = [];
     for (const { book_id, amountRented } of books) {
       const book = await Book.findById(book_id);
 
       if (!book || book.amountAvailable < amountRented) {
-        return res.status(400).json({ message: `Not enough copies available for book ${book_id}.` });
+        return res.status(400).json({ message: Not enough copies available for book ${book_id}. });
       }
-
       book.amountAvailable -= amountRented;
       book.amountRented += amountRented;
       await book.save();
-
-      newBooks.push({ id_Book: book_id, amount_rented: amountRented });
+      let id_Book = book_id
+      let amount_rented = amountRented
+      newBooks.push({ id_Book, amount_rented });
     }
-
     const newRent = new Rent({ user_id, books: newBooks });
     await newRent.save();
 
@@ -46,7 +44,8 @@ exports.createRent = [checkAuthorization, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
-}];
+};
+
 
 exports.updateRent = [checkAuthorization, async (req, res) => {
   try {
