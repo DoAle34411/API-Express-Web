@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const session = require('express-session');
 const mongoose = require('mongoose');
@@ -6,7 +5,7 @@ const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const bookRoutes = require('./routes/bookRoutes');  // Ensure correct path
 const rentRoutes = require('./routes/rentRoutes');
-require('dotenv').config();  // Load environment variables from .env
+require('dotenv').config(); // Load environment variables from .env
 
 const app = express();
 
@@ -17,7 +16,12 @@ app.use(session({
     resave: false, 
     saveUninitialized: false 
 }));
-app.use(cors({credentials: true}));
+
+// CORS Configuration
+app.use(cors({
+    origin: 'https://frontend-web.onrender.com', // Replace with your frontend domain
+    credentials: true // Allow cookies and credentials
+}));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, { 
