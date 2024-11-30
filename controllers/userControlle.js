@@ -1,6 +1,17 @@
 const User = require('../models/Users');
 const bcrypt = require('bcryptjs');
 
+const checkAuthorization = (req, res, next) => {
+  const authorization = req.headers['authorization'];
+
+  // Check if the authorization header matches the expected value
+  if (authorization !== 'HeSaidSheSaidBu11$!t') {
+    return res.status(403).json({ message: 'Forbidden: Invalid authorization header' });
+  }
+
+  next();
+};
+
 // Create User
 exports.createUser = async (req, res) => {
   const { cedula, email, name, lastName, birthDate, phoneNumber, password, gender } = req.body;
@@ -60,24 +71,24 @@ exports.findUserByCedula = async (req, res) => {
 };
 
 // Update User
-exports.updateUser = async (req, res) => {
+exports.updateUser = [checkAuthorization, async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}];
 
 // Delete User
-exports.deleteUser = async (req, res) => {
+exports.deleteUser = [checkAuthorization, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.status(204).end();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}];
 
 // Login User
 exports.loginUser = async (req, res) => {
@@ -96,34 +107,23 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-exports.loginAdmin = async (req, res) => {
+exports.loginAdmin = [checkAuthorization, async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Find the user by email
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Check if the password matches
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Check if the user has admin privileges
-    if (!user.isAdmin) {
-      return res.status(403).json({ message: "Access denied. Admins only." });
-    }
+    if (!user.isAdmin) return res.status(403).json({ message: "Access denied. Admins only." });
 
-    // If all checks pass, set session or token and respond
-    req.session.userId = user._id;  // Assuming session-based authentication
+    req.session.userId = user._id;
     res.json({ message: "Admin login successful", userId: user._id });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
-};
+}];
 
 
 // Update Password
@@ -145,16 +145,18 @@ exports.updatePassword = async (req, res) => {
   }
 };
 
-exports.getAllUsers = async (req, res) => {
+// Get all Users
+exports.getAllUsers = [checkAuthorization, async (req, res) => {
   try {
     const users = await User.find();
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}];
 
-exports.clearMulta = async (req, res) => {
+// Clear Multa
+exports.clearMulta = [checkAuthorization, async (req, res) => {
   try {
     const user = await User.findById(req.params.user_id);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -165,7 +167,7 @@ exports.clearMulta = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}];
 
 exports.findUserById = async (req, res) => {
   try {

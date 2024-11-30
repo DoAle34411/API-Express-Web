@@ -2,7 +2,18 @@ const Rent = require('../models/Rent');
 const Book = require('../models/Book');
 const User = require('../models/Users');
 
-exports.createRent = async (req, res) => {
+const checkAuthorization = (req, res, next) => {
+  const authorization = req.headers['authorization'];
+
+  // Check if the authorization header matches the expected value
+  if (authorization !== 'HeSaidSheSaidBu11$!t') {
+    return res.status(403).json({ message: 'Forbidden: Invalid authorization header' });
+  }
+
+  next();
+};
+
+exports.createRent = [checkAuthorization, async (req, res) => {
   const { user_id, books } = req.body;
 
   try {
@@ -12,6 +23,7 @@ exports.createRent = async (req, res) => {
     if (user.multa > 0) {
       return res.status(400).json({ message: "User has pending multa. Cannot create rent." });
     }
+
     const newBooks = [];
     for (const { book_id, amountRented } of books) {
       const book = await Book.findById(book_id);
@@ -19,13 +31,14 @@ exports.createRent = async (req, res) => {
       if (!book || book.amountAvailable < amountRented) {
         return res.status(400).json({ message: `Not enough copies available for book ${book_id}.` });
       }
+
       book.amountAvailable -= amountRented;
       book.amountRented += amountRented;
       await book.save();
-      let id_Book = book_id
-      let amount_rented = amountRented
-      newBooks.push({ id_Book, amount_rented });
+
+      newBooks.push({ id_Book: book_id, amount_rented: amountRented });
     }
+
     const newRent = new Rent({ user_id, books: newBooks });
     await newRent.save();
 
@@ -33,12 +46,13 @@ exports.createRent = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Internal server error", error: err.message });
   }
-};
+}];
 
-exports.updateRent = async (req, res) => {
+exports.updateRent = [checkAuthorization, async (req, res) => {
   try {
-    const rent = await Rent.findOne({rent_id: req.params.rent_id});
+    const rent = await Rent.findOne({ rent_id: req.params.rent_id });
     if (!rent) return res.status(404).json({ message: "Rent not found" });
+
     // Update return_date and check for lateness
     rent.return_date = new Date();
     if (rent.return_date > rent.max_end_date) {
@@ -48,15 +62,15 @@ exports.updateRent = async (req, res) => {
       user.multa = (user.multa || 0) + 20;
       await user.save();
     }
+
     // Restore availability for each book in the rent
-    for (const { id_Book, amount_rented  } of rent.books) {
-      console.log(id_Book)
+    for (const { id_Book, amount_rented } of rent.books) {
       await Book.findByIdAndUpdate(
         id_Book,
         {
           $inc: {
-            amountAvailable: amount_rented , // Increment availability
-            amountRented: -amount_rented ,  // Decrement rented count
+            amountAvailable: amount_rented, // Increment availability
+            amountRented: -amount_rented,  // Decrement rented count
           },
         },
         { new: true } // Return the updated document (optional for debugging/logging)
@@ -68,7 +82,7 @@ exports.updateRent = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}];
 
 exports.getAllRents = async (req, res) => {
   try {

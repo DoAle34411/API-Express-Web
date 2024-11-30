@@ -1,7 +1,18 @@
 const Book = require('../models/Book');
 
+const checkAuthorization = (req, res, next) => {
+  const authorization = req.headers['authorization'];
+
+  // Check if the authorization header matches the expected value
+  if (authorization !== 'HeSaidSheSaidBu11$!t') {
+    return res.status(403).json({ message: 'Forbidden: Invalid authorization header' });
+  }
+
+  next();
+};
+
 // Create Book
-exports.createBook = async (req, res) => {
+exports.createBook = [checkAuthorization, async (req, res) => {
   const { name, editorial, edition, status, author, genre, pages, amountAvailable, amountTotal, synopsis, bookImage } = req.body;
   
   try {
@@ -26,7 +37,8 @@ exports.createBook = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Internal server error" });
   }
-};
+}];
+
 
 // Read Book by ID
 exports.findBookById = async (req, res) => {
@@ -40,24 +52,24 @@ exports.findBookById = async (req, res) => {
 };
 
 // Update Book
-exports.updateBook = async (req, res) => {
+exports.updateBook = [checkAuthorization, async (req, res) => {
   try {
     const book = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(book);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}];
 
 // Delete Book
-exports.deleteBook = async (req, res) => {
+exports.deleteBook = [checkAuthorization, async (req, res) => {
   try {
     await Book.findByIdAndDelete(req.params.id);
     res.status(204).end();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+}];
 
 // Get All Books
 exports.getAllBooks = async (req, res) => {
