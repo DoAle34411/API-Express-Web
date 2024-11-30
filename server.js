@@ -19,7 +19,7 @@ app.use(session({
 
 // CORS Configuration
 app.use(cors({
-    origin: 'https://remix-front.onrender.com/', // Replace with your frontend domain
+    origin: 'https://remix-front.onrender.com', // Replace with your frontend domain
     credentials: true // Allow cookies and credentials
 }));
 
