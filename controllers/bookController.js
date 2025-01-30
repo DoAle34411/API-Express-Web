@@ -11,26 +11,32 @@ const checkAuthorization = (req, res, next) => {
   next();
 };
 
+const createBookInstance = ({
+  name, editorial, edition, status, author, genre, pages, 
+  amountAvailable, amountTotal, synopsis, bookImage
+}) => {
+  return new Book({
+    name,
+    editorial,
+    edition,
+    status,
+    author,
+    genre,
+    pages,
+    amountAvailable,
+    amountTotal,
+    amountRented: 0,
+    synopsis,
+    imageUrl: bookImage || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'
+  });
+};
+
 // Create Book
 exports.createBook = [checkAuthorization, async (req, res) => {
-  const { name, editorial, edition, status, author, genre, pages, amountAvailable, amountTotal, synopsis, bookImage } = req.body;
+  const bookData = req.body;
   
   try {
-    const newBook = new Book({
-      name,
-      editorial,
-      edition,
-      status,
-      author,
-      genre,
-      pages,
-      amountAvailable,
-      amountTotal,
-      amountRented: 0,
-      synopsis,
-      imageUrl: bookImage || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'
-    });
-    
+    const newBook = createBookInstance(bookData);
     await newBook.save();
     res.status(201).json(newBook);
   } catch (err) {

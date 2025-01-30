@@ -100,3 +100,17 @@ exports.getCurrentEvents = async (req, res) => {
     }
   };
   
+  exports.duplicateEvent = [checkAuthorization, async (req, res) => {
+    try {
+      const event = await Event.findById(req.params.id);
+      if (!event) return res.status(404).json({ message: 'Event not found' });
+  
+      const clonedEvent = event.clone();
+      await clonedEvent.save();
+  
+      res.status(201).json(clonedEvent);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  }];

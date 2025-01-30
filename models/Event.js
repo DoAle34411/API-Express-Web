@@ -1,14 +1,23 @@
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
 
-const eventSchema = new Schema({
-  _id: { type: String, default: () => new mongoose.Types.ObjectId() }, // MongoDBUUID
-  name: { type: String, required: true },
-  descripcion: { type: String, required: true },
-  start_date: { type: Date, required:true },
-  end_date: { type: Date, required:true },
-  genres: { type: Array, required: true },
-}, { timestamps: true });
+const eventSchema = new mongoose.Schema({
+  name: String,
+  descripcion: String,
+  start_date: Date,
+  end_date: Date,
+  genres: [String],
+});
+
+// Prototype Pattern: Clone method
+eventSchema.methods.clone = function () {
+  return new this.constructor({
+    name: this.name,
+    descripcion: this.descripcion,
+    start_date: this.start_date,
+    end_date: this.end_date,
+    genres: [...this.genres], // Ensure a deep copy of the array
+  });
+};
 
 const Event = mongoose.model('Event', eventSchema);
 module.exports = Event;

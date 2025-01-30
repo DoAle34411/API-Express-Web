@@ -8,5 +8,6 @@ router.get('/:id', eventController.findEventById); // X
 router.put('/updateEvent/:id', eventController.updateEvent); // X
 router.delete('/deleteEvent/:id', eventController.deleteEvent); // X
 router.get('/events/currentEvents', eventController.getCurrentEvents); // Fetch books by genre list X
+router.post('/events/duplicate/:id', eventController.duplicateEvent);
 
 module.exports = router;
